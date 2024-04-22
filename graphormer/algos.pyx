@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import numpy
+cimport numpy
 
 cdef unsigned int UNREACHABLE_VAL = 21  #(multi_hop_max_dist = 20, so higher distance won't be reached)
 

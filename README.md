@@ -25,6 +25,29 @@ We propose novel unsupervised pre-training techniques designed for heterogeneous
 
 ## Setup
 
+### Bleki:
+Vytvorit virtualenv na zaklade python 3.7 alebo 3.8 verzie...
+Zoznam dostupnych verzii:
+```
+pyenv versions
+```
+Ja mam napr. 3.8.2, aktivoval som si ju globalne, aby bolo nove virtualne prostredie odvodene od tejto verzie:
+```
+pyenv global 3.8.2
+```
+Potom som vyrobil virtualne prostredie:
+```
+pyenv virtualenv unsupervised-pretraining
+```
+Potom som najskor samostatne nechal nainstalovat pytorch (lebo iny requirement to uz potreboval mat v case instalacie..)
+```
+pip install torch==1.7.1
+```
+Nasledne install aj ostatnych requirements..
+```
+pip install -r requirements.txt
+```
+
 The code was tested with Python 3.7. The following requirements need to be installed:
 
 ```
