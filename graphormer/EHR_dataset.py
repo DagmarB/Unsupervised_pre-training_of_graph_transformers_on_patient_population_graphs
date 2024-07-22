@@ -502,8 +502,8 @@ class MIMICDataset(Dataset):
         if self.task == 'pre_mask' or self.task == 'patient_prediction':
             # y_acu = torch.tensor([d['acu'] for d in data.y])
             # y_acu = summarize_acu_task(y_acu)
-            y_los = torch.tensor([d['los'] for d in data.y])
-            y = (torch.stack([d['vals'][:window_length] for d in data.y]), torch.stack([d['treatments_hour'][:window_length] for d in data.y]), y_los)
+            y = (torch.stack([d['vals'][:window_length] for d in data.y]), torch.stack([d['treatments_hour'][:window_length] for d in data.y]), 
+                 torch.tensor([d['los'] for d in data.y]))
         elif self.task == 'treat_prediction':
             y = torch.stack([d['treatments_bin'][:14] for d in data.y])
         elif self.task == 'multi_task_pt':  # collect gt for all possible tasks (treatment prediction, feature masking, patient masking)
@@ -530,6 +530,7 @@ class MIMICDataset(Dataset):
         data.is_measured = is_measured
         data.predict = self.predict
         data.padding_mask = padding_mask
+        
         return data
 
     def process(self):
@@ -571,6 +572,10 @@ class MIMICDataset(Dataset):
                     ts_is_measured = pd.read_csv(patient_dir + '/' + 'ts_is_measured.csv')
                     static_tasks_binary_multilabel = pd.read_csv(patient_dir + '/' + 'static_tasks_binary_multilabel.csv')
                     final_acuity_outcome = pd.read_csv(patient_dir + '/' + 'Final Acuity Outcome.csv')
+
+                    #BLEKI ts_is_measured contains _N columns (e.g. ('mean corpuscular hemoglobin', 'time_since_measured')_0, ..._1 etc.)
+                    # we only take the first one (_0)
+                    ts_is_measured = ts_is_measured.filter(regex="_0$")
 
                     # here we save full ICU stay in graph, so that we can do random cropping + padding during training also for same graph
                     patient_icuids.append(patient_icuid)

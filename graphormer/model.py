@@ -170,7 +170,8 @@ class Graphormer(pl.LightningModule):
             age_dim = 8
 
             self.age_encoder = nn.Linear(1, age_dim)
-            self.demographics_encoder = nn.Embedding(20, dems_dim, padding_idx=0)  # 20 for 4 dems, 32 with ethnicity and insurance
+            #BLEKIself.demographics_encoder = nn.Embedding(20, dems_dim, padding_idx=0)  # 20 for 4 dems, 32 with ethnicity and insurance
+            self.demographics_encoder = nn.Embedding(32, dems_dim, padding_idx=0)  # 20 for 4 dems, 32 with ethnicity and insurance
             if not self.skip_transformer:
                 self.vals_upscale = nn.Linear(vals_feature_num, vals_dim)
 
@@ -408,7 +409,11 @@ class Graphormer(pl.LightningModule):
             # build node_features for MIMIC
 
             age_features = self.age_encoder(demographics[:, :, 0:1]).squeeze()
-            dem_features = self.demographics_encoder(demographics[:, :, 1:].long()).sum(dim=-2).squeeze()
+            #BLEKIdem_features = self.demographics_encoder(demographics[:, :, 1:].long()).sum(dim=-2).squeeze()
+            demographics = torch.where(torch.isnan(demographics), torch.zeros_like(demographics), demographics) #dagmar cb - it was necessary to replace NaNs with 0s to make encoder work
+            dem_features = self.demographics_encoder(demographics[:, :, 1:].long())
+            dem_features = dem_features.sum(dim=-2)
+            dem_features = dem_features.squeeze()
 
             vals_features = self.vals_upscale(vals)
 

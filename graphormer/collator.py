@@ -253,7 +253,7 @@ def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20, dat
             items = [(item.adj, item.idx, item.attn_bias, item.attn_edge_type, item.spatial_pos, item.in_degree, item.out_degree, item.vals,
                       item.treatments,
                       item.demographics, item.is_measured, item.node_id, item.edge_input[:, :, :multi_hop_max_dist, :], item.y,
-                      item.update_mask, item.train_mask, item.val_mask, item.test_mask, item.padding_mask) for item in
+                      item.get('update_mask', None), item.get('train_mask', None), item.get('val_mask', None), item.get('test_mask',None), item.get('padding_mask', None)) for item in
                      items]  # , item.edge_index
             adjs, idxs, attn_biases, attn_edge_types, spatial_poses, in_degrees, out_degrees, valss, treatmentss, demographicss, is_measureds, node_ids, \
             edge_inputs, ys, update_masks, train_masks, val_masks, test_masks, padding_masks = zip(*items)
@@ -289,7 +289,7 @@ def collator(items, max_node=512, multi_hop_max_dist=20, spatial_pos_max=20, dat
 
     if dataset == 'mimic':  # want to do batching
         val_feature_num = valss[0].shape[2]
-        if type(ys[0]) == tuple:  # for masking we have two ys for val and treatments
+        if type(ys[0]) == tuple or type(ys[0]) == list:  # for masking we have two ys for val and treatments
             # check pre_mask type to form y
             if mask_task is not None:
                 vals_y, treat_y, treat_bin_y = zip(*ys)
