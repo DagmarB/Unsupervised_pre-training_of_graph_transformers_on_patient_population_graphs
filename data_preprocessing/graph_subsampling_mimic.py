@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def create_subgraphs_mimic_random(rotation=1):
+def create_subgraphs_mimic_random(rotation=0):
     # load patient id lists for all splits in this rotation with json
     with open(f'data/mimic-iii-0/rotations/train_patients_rot_{rotation}.json', 'r') as f:
         train_patients = json.load(f)

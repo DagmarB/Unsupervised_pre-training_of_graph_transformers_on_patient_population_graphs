@@ -150,9 +150,10 @@ def get_mean_dataset_values():
         ts_is_measured = pd.read_csv('data/mimic-iii-0/train/' + folder + '/' + 'ts_is_measured.csv')
 
         for col in ts_vals.columns:
-            is_measured = ts_is_measured[col.replace("'mean'", "'time_since_measured'")]
-            ts_vals[col] = ts_vals[col].mask(is_measured == 0.0, np.nan)
-            value_means[col].append(ts_vals[col].dropna().mean())
+            if col.find("'std'") == -1:
+                is_measured = ts_is_measured[col.replace("'mean'", "'time_since_measured'") + '_0'] #modified according to the current file structure
+                ts_vals[col] = ts_vals[col].mask(is_measured == 0.0, np.nan)
+                value_means[col].append(ts_vals[col].dropna().mean())
 
     # convert all lists in value_means to overall mean
     for col in value_means:

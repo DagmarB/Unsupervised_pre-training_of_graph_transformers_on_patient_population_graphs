@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from data_preprocessing.mimic_data_analysis import get_original_ages
+from data_preprocessing.mimic_data_analysis import get_mean_dataset_values
 
 
 def transform_tadpole():
@@ -144,30 +145,30 @@ def transform_sepsis(set='A'):
 
 
 def transform_mimic():
-    age_df = get_original_ages()
+    #age_df = get_original_ages() #commented because it is not available
     value_means = json.load(open('data/mimic-iii-0/value_means.json'))
     # iterate through all folder in data/mimic-iii-0/test, use tqdm to show progress
-    for folder in tqdm(os.listdir('data/mimic-iii-0/test')):
+    for folder in tqdm(os.listdir('data/mimic-iii-0/val')):
         # if folder is not a directory , skip it
-        if not os.path.isdir('data/mimic-iii-0/test/' + folder) or not folder.startswith('patient'):
+        if not os.path.isdir('data/mimic-iii-0/val/' + folder) or not folder.startswith('patient'):
             continue
         # extract patient id from folder name
         patient_id = folder.split('_')[1]
         # extract data and static prediction task labels, for now ignore rolling tasks
 
-        treatments = pd.read_csv('data/mimic-iii-0/test/' + folder + '/' + 'ts_treatment.csv')
+        treatments = pd.read_csv('data/mimic-iii-0/val/' + folder + '/' + 'ts_treatment.csv')
         if 'DNR Ordered_1' in treatments.columns:
             treatments = treatments.drop(['DNR Ordered_1', 'Comfort Measures Ordered_1'], axis=1)
-            treatments.to_csv('data/mimic-iii-0/test/' + folder + '/' + 'ts_treatment.csv', index=False)
+            treatments.to_csv('data/mimic-iii-0/val/' + folder + '/' + 'ts_treatment.csv', index=False)
 
-        statics = pd.read_csv('data/mimic-iii-0/test/' + folder + '/' + 'statics.csv')
-        ts_vals = pd.read_csv('data/mimic-iii-0/test/' + folder + '/' + 'ts_vals.csv')
-        ts_is_measured = pd.read_csv('data/mimic-iii-0/test/' + folder + '/' + 'ts_is_measured.csv')
+        statics = pd.read_csv('data/mimic-iii-0/val/' + folder + '/' + 'statics.csv')
+        ts_vals = pd.read_csv('data/mimic-iii-0/val/' + folder + '/' + 'ts_vals.csv')
+        ts_is_measured = pd.read_csv('data/mimic-iii-0/val/' + folder + '/' + 'ts_is_measured.csv')
 
         # for all columns in ts_vals , replace 'nan' with last measured value or zero if none was measured
         for col in ts_vals.columns:
             # ts_vals[col] = ts_vals[col].fillna(method='ffill') # fill forward
-            is_measured = ts_is_measured[col.replace("'mean'", "'time_since_measured'")]
+            is_measured = ts_is_measured[col.replace("'mean'", "'time_since_measured'") + '_0'] #modified according to the current file structure
             ts_vals[col] = ts_vals[col].mask(is_measured == 0.0, np.nan)
             # if column has only nan values, replace with mean value
             if ts_vals[col].isnull().all():
@@ -175,22 +176,24 @@ def transform_mimic():
             ts_vals[col] = ts_vals[col].interpolate(method='linear', limit_area='inside')  # fill with linear interpolation
             ts_vals[col] = ts_vals[col].fillna(method='ffill')  # set values at end to last known value
             ts_vals[col] = ts_vals[col].fillna(method='bfill')  # fill with first known value whatever is left in beginning of seqs
-        ts_vals.to_csv('data/mimic-iii-0/test/' + folder + '/' + 'ts_vals_linear_imputed.csv', index=False)
+        ts_vals.to_csv('data/mimic-iii-0/val/' + folder + '/' + 'ts_vals_linear_imputed.csv', index=False)
 
         # get age from row where patient id is equal to current patient id
-        real_age = age_df[age_df['ICUSTAY_ID'] == int(patient_id)]['age'].values[0]
+        #real_age = age_df[age_df['ICUSTAY_ID'] == int(patient_id)]['age'].values[0] #commented because it is not available
         # create pandas dataframe with columns 'gender', 'ethnicity', 'insurance', 'admission_type', 'first_careunit'
-        new_statics = pd.DataFrame(columns=['age', 'gender', 'ethnicity', 'insurance', 'admission_type', 'first_careunit'])
-        value_row = defaultdict(int)
-        value_row['age'] = real_age
+        #new_statics = pd.DataFrame(columns=['age', 'gender', 'ethnicity', 'insurance', 'admission_type', 'first_careunit'])
+        value_row = pd.DataFrame(columns=['age', 'gender', 'ethnicity', 'insurance', 'admission_type', 'first_careunit'])
+        #value_row = defaultdict(int)
+        #value_row['age'] = real_age # not available right now
+        value_row['age'] = statics['age']
         for i in range(1, 3):
             if statics[f'gender_{i}'].values[0] == 1:
                 # add gender column to new_statics df and add value 1
                 value_row['gender'] = i - 1  # 1 to 0, 2 to 1
 
-        for i in range(5):
+        for i in range(1, 5):
             if statics[f'ethnicity_{i}'].values[0] == 1:
-                value_row['ethnicity'] = i
+                value_row['ethnicity'] = i  #should not be also i-1?
 
         for i in range(1, 6):
             if statics[f'insurance_{i}'].values[0] == 1:
@@ -206,14 +209,14 @@ def transform_mimic():
             if statics[f'first_careunit_{i}'].values[0] == 1:
                 value_row['first_careunit'] = i - 1
 
-        new_statics = new_statics.append(value_row, ignore_index=True)
+        #new_statics = new_statics.append(value_row, ignore_index=True)
         # save to statics.csv
-        new_statics.to_csv('data/mimic-iii-0/test/' + folder + '/' + 'statics.csv', index=False)
+        value_row.to_csv('data/mimic-iii-0/val/' + folder + '/' + 'statics.csv', index=False)
 
 
 if __name__ == '__main__':
-    # get_mean_dataset_values()
-    # transform_mimic()
+    #get_mean_dataset_values()
+    transform_mimic()
     # transform_sepsis(set='B')
     # get_mean_dataset_values_sepsis(set='B')
     pass

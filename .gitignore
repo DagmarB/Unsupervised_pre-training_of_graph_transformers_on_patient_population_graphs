@@ -1,1 +1,6 @@
 /.idea/
+/data/mimic-iii-0/
+/data/sepsis/
+/data/tadpole/
+*.pyc
+/exps/

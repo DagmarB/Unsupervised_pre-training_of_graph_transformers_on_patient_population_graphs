@@ -353,7 +353,7 @@ class MIMICDataset(Dataset):
             self.data_path = f'rotations/rot{rotation}/mimic_graph_test_edge_{edge_id}_knn_{"lin_interpol_" if self.lin_interpolation else ""}subset_'
 
         else:
-            self.all_graph_idx_files = [f'rot{rotation}/random_graph_subset_dev_{i}.json' for i in
+            self.all_graph_idx_files = [f'rot{rotation}/random_graph_subset_{i}.json' for i in
                                         range(num_graphs)]  # 55 for age graph, 43 for random graph
             self.all_graphs = [
                 f'rotations/rot{rotation}/mimic_graph_full_edge_{edge_id}_knn_{"lin_interpol_" if self.lin_interpolation else ""}subset_{i}.pt' if not drop_val_patients or self.split != 'train' else f'rotations/rot{rotation}/mimic_graph_train_edge_{edge_id}_knn_{"lin_interpol_" if self.lin_interpolation else ""}subset_{i}.pt'
@@ -552,7 +552,7 @@ class MIMICDataset(Dataset):
             patient_ys = []  # dict for several prediction tasks
             # go through all patient folders with id in patient_icuids
             for info in patient_icuids_and_splits:
-                if self.rotation == 0:
+                if self.rotation == 1: #was originally 0, but did not work, maybe obsolete DCB
                     patient_icuid, split = info
                     folder = split
                 else:
@@ -575,9 +575,11 @@ class MIMICDataset(Dataset):
                     # here we save full ICU stay in graph, so that we can do random cropping + padding during training also for same graph
                     patient_icuids.append(patient_icuid)
                     patient_vals.append(torch.tensor(ts_vals.values.astype(np.float32)))
+                    #patient_dems.append(
+                    #    torch.tensor(statics.drop(['ethnicity', 'insurance'], axis=1).values.astype(np.float32)))  # drop for ethical reasons
                     patient_dems.append(
-                        torch.tensor(statics.drop(['ethnicity', 'insurance'], axis=1).values.astype(np.float32)))  # drop for ethical reasons
-                    patient_graph_dems.append(statics[['age', 'gender']])  # can stay df as it will not be used as model input or label
+                        torch.tensor(statics.values.astype(np.float32)))
+                    #patient_graph_dems.append(statics[['age', 'gender']])  # can stay df as it will not be used as model input or label
                     patient_treatments.append(torch.tensor(ts_treatment.values.astype(np.float32)))
                     patient_is_measured.append(torch.tensor(ts_is_measured.values.astype(np.float32)))
 
